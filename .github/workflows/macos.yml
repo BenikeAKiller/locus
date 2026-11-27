@@ -1,0 +1,73 @@
+name: macOS build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  macos:
+    runs-on: macos-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure (Xcode, universal arm64 + x86_64, macOS 12+)
+        run: cmake -S . -B build -G Xcode
+
+      - name: Build Release
+        run: cmake --build build --config Release --parallel -- -quiet
+
+      - name: Ad-hoc sign the bundles
+        run: |
+          codesign --force --deep --sign - "build/app/Locus_artefacts/Release/Locus.app"
+          codesign --force --deep --sign - "build/send/LocusSend_artefacts/Release/VST3/Locus Send.vst3"
+          codesign --force --deep --sign - "build/send/LocusSend_artefacts/Release/AU/Locus Send.component"
+          lipo -info "build/send/LocusSend_artefacts/Release/VST3/Locus Send.vst3/Contents/MacOS/Locus Send"
+
+      - name: Unit tests (ctest)
+        run: ctest --test-dir build -C Release --output-on-failure
+
+      - name: End-to-end plugin check (VST3)
+        run: build/tests/LocusPluginCheck_artefacts/Release/LocusPluginCheck "build/send/LocusSend_artefacts/Release/VST3/Locus Send.vst3"
+
+      - name: Download pluginval
+        run: |
+          curl -fsSL -o pluginval.zip https://github.com/Tracktion/pluginval/releases/latest/download/pluginval_macOS.zip
+          unzip -q pluginval.zip
+          echo "PLUGINVAL=$PWD/pluginval.app/Contents/MacOS/pluginval" >> "$GITHUB_ENV"
+
+      - name: pluginval VST3 (strictness 10)
+        run: |
+          "$PLUGINVAL" --strictness-level 10 --validate-in-process --output-dir pluginval-logs \
+                       --validate "build/send/LocusSend_artefacts/Release/VST3/Locus Send.vst3"
+
+      - name: pluginval AU (strictness 10)
+        run: |
+          mkdir -p ~/Library/Audio/Plug-Ins/Components
+          ditto "build/send/LocusSend_artefacts/Release/AU/Locus Send.component" \
+                ~/Library/Audio/Plug-Ins/Components/"Locus Send.component"
+          killall -9 AudioComponentRegistrar 2>/dev/null || true
+          auval -v aufx LcSd Locu
+          "$PLUGINVAL" --strictness-level 10 --validate-in-process --output-dir pluginval-logs \
+                       --validate ~/Library/Audio/Plug-Ins/Components/"Locus Send.component"
+
+      - name: Build installer package
+        run: bash installer/build-mac-pkg.sh build
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: Locus-macOS
+          path: |
+            dist/*-macOS.pkg
+            FRIENDS_README.txt
+          if-no-files-found: error
+
+      - name: Upload pluginval logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pluginval-logs
+          path: pluginval-logs
+          if-no-files-found: ignore
