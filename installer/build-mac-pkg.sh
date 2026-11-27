@@ -37,10 +37,20 @@ done
 # Install the bundles exactly at these paths: by default the installer "relocates" a bundle
 # to wherever a copy with the same identifier already is (e.g. a build folder).
 pkgbuild --analyze --root "$ROOT" "$STAGE/components.plist"
-n=$(/usr/libexec/PlistBuddy -c "Print" "$STAGE/components.plist" | grep -c "RootRelativeBundlePath")
-for ((i = 0; i < n; i++)); do
-    /usr/libexec/PlistBuddy -c "Set :$i:BundleIsRelocatable false" "$STAGE/components.plist"
-done
+python3 - "$STAGE/components.plist" <<'EOF'
+import plistlib, sys
+path = sys.argv[1]
+with open(path, "rb") as f:
+    bundles = plistlib.load(f)
+def pin(entries):
+    for b in entries:
+        b["BundleIsRelocatable"] = False
+        pin(b.get("ChildBundles", []))
+pin(bundles)
+with open(path, "wb") as f:
+    plistlib.dump(bundles, f)
+print("bundles:", [b["RootRelativeBundlePath"] for b in bundles])
+EOF
 
 # After installing, make the Audio Unit visible without logging out.
 mkdir -p "$STAGE/scripts"
