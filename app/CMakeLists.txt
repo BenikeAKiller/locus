@@ -21,6 +21,14 @@ target_link_libraries(locus_app_lib INTERFACE
     juce::juce_audio_utils
 )
 
+# ASIO on Windows: most pro interfaces (RME, etc.) expose all their channels only through ASIO.
+# The Steinberg ASIO SDK headers are in third_party/asiosdk, used under its GPLv3 option
+# (Locus is AGPLv3, see LICENSE).
+if(WIN32)
+    target_compile_definitions(locus_app_lib INTERFACE JUCE_ASIO=1)
+    target_include_directories(locus_app_lib INTERFACE ${PROJECT_SOURCE_DIR}/third_party/asiosdk/common)
+endif()
+
 juce_add_gui_app(Locus
     PRODUCT_NAME "Locus"
     COMPANY_NAME "Locus"

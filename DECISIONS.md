@@ -88,3 +88,9 @@ Interpretations of BUILD_PROMPT.md, one line each.
 
 - Windows builds link the Visual C++ runtime statically (`CMAKE_MSVC_RUNTIME_LIBRARY`), so Locus and Locus Send need only Windows system DLLs, with no Visual C++ Redistributable install.
 - The ring buffer grows from the spec's 16384 to 32768 frames per channel, so DAWs with 8192-frame blocks don't drop out (the test of 8192-frame blocks had an underrun at 16384). The shared-memory name becomes `LocusShm_v2` and the layout version 2, so an old plugin and a new app never share memory; they simply don't see each other.
+
+## 0.1.1: first feedback from users
+
+- ASIO is enabled on Windows (`JUCE_ASIO=1`). Reported: an RME Fireface UFX couldn't be selected via ASIO and showed only 6 channels through Windows Audio (WASAPI shared mode follows the Windows speaker configuration, e.g. 5.1 = 6 channels). The Steinberg ASIO SDK 2.3.4 `common/` headers are vendored in `third_party/asiosdk` under the SDK's GPLv3 option; Locus is now explicitly AGPLv3 (`LICENSE`), which is GPLv3-compatible and matches JUCE's free license.
+- Output channel mapping: a device callback receives only the active output channels, packed. The app now maps them back to device channel numbers, so switching an output off in Settings no longer shifts every later speaker onto the wrong output; a speaker on an inactive channel renders into a scratch buffer and is silent.
+- Reported: "it only moves between two speakers" (a speaker layout on a device with fewer outputs). The top bar now says "Outputs N–M not available on this device (see Settings)" in the warning colour whenever the layout uses outputs the open device can't play.

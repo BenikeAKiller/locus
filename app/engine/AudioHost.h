@@ -44,6 +44,14 @@ private:
     void timerCallback() override;
 
     juce::AudioDeviceManager deviceManager;
+
+    // The device hands the callback only its active output channels, packed together. The
+    // engine addresses speakers by device channel number, so the callback rebuilds the full
+    // list: channel c -> outputs[outputIndex[c]], or a scratch buffer when c is inactive.
+    std::array<int, locus::maxSpeakers> outputIndex {};
+    int numDeviceChannels = 0;
+    std::vector<std::vector<float>> scratch;
+
     locus::RenderEngine engine;
     locus::ipc::AppEndpoint endpoint;
     std::array<locus::SourceParamStore*, locus::maxSources> stores {};

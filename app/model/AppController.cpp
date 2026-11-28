@@ -316,6 +316,22 @@ juce::String AppController::getDeviceSummary() const
     return "No audio device";
 }
 
+juce::Array<int> AppController::getMissingOutputs() const
+{
+    juce::Array<int> missing;
+    auto* device = host.getDeviceManager().getCurrentAudioDevice();
+    if (device == nullptr)
+        return missing;
+
+    const auto active = device->getActiveOutputChannels();
+    for (const auto& s : layout.speakers)
+        if (! active[s.output - 1])
+            missing.addIfNotAlreadyThere (s.output);
+
+    missing.sort();
+    return missing;
+}
+
 double AppController::getCpuPercent() const
 {
     return host.getDeviceManager().getCpuUsage() * 100.0;

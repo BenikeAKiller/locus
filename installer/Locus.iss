@@ -3,7 +3,7 @@
 ; after a Release build of the whole project. Output: dist\Locus-<version>-Windows-Setup.exe
 
 #define AppName "Locus"
-#define AppVersion "0.1.0"
+#define AppVersion "0.1.1"
 #define BuildDir "..\build"
 
 [Setup]

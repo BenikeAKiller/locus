@@ -75,3 +75,7 @@ No Mac is needed: [.github/workflows/macos.yml](.github/workflows/macos.yml) bui
 Download the artifact from the run's Summary page (it arrives zipped; unzip to get the `.pkg`). The package installs `Locus.app` into `/Applications`, `Locus Send.vst3` into `/Library/Audio/Plug-Ins/VST3` and `Locus Send.component` into `/Library/Audio/Plug-Ins/Components`. On a Mac, `bash installer/build-mac-pkg.sh` after a Release Xcode build makes the same package locally.
 
 Nothing is signed with an Apple Developer ID or notarized, so Gatekeeper blocks the package and the app on first open; [FRIENDS_README.txt](FRIENDS_README.txt) explains how to open them anyway. On macOS the shared memory is a POSIX `shm_open` object named `/LocusShm_v2` (macOS caps these names at 31 characters).
+
+## License
+
+Locus is licensed under the GNU Affero General Public License v3 ([LICENSE](LICENSE)), matching JUCE's free license. The Windows build includes the Steinberg ASIO SDK headers (`third_party/asiosdk`), used under the SDK's GPLv3 option; see `third_party/asiosdk/LICENSE.txt`. ASIO is a trademark of Steinberg Media Technologies GmbH.

@@ -41,6 +41,15 @@ void AudioHost::audioDeviceAboutToStart (juce::AudioIODevice* device)
     engine.prepare (sampleRate, bufferSize);
     endpoint.prepare (sampleRate, bufferSize);
 
+    // Map device channel numbers to the packed active-channel buffers (see outputIndex).
+    const auto active = device->getActiveOutputChannels();
+    numDeviceChannels = juce::jmin (locus::maxSpeakers, active.getHighestBit() + 1);
+    int packed = 0;
+    for (int c = 0; c < locus::maxSpeakers; ++c)
+        outputIndex[(size_t) c] = c < numDeviceChannels && active[c] ? packed++ : -1;
+
+    scratch.assign ((size_t) locus::maxSpeakers, std::vector<float> ((size_t) std::max (bufferSize * 2, 8192), 0.0f));
+
    #if JUCE_DEBUG
     testSignal.assign ((size_t) std::max (bufferSize, 8192), 0.0f);
     testSampleRate = sampleRate;
@@ -81,5 +90,23 @@ void AudioHost::audioDeviceIOCallbackWithContext (const float* const*, int,
     }
    #endif
 
-    engine.process (inputs, outputs, numOutputs, numSamples);
+    std::array<float*, locus::maxSpeakers> channels {};
+    const bool fits = (size_t) numSamples <= (scratch.empty() ? 0 : scratch[0].size());
+    for (int c = 0; c < numDeviceChannels; ++c)
+    {
+        const auto index = outputIndex[(size_t) c];
+        channels[(size_t) c] = index >= 0 && index < numOutputs ? outputs[index]
+                             : fits ? scratch[(size_t) c].data() : nullptr;
+    }
+
+    if (! fits && std::find (channels.begin(), channels.begin() + numDeviceChannels, nullptr) != channels.begin() + numDeviceChannels)
+    {
+        // A block larger than announced with inactive channels in between: play silence
+        // rather than write past the scratch buffers. Not expected from real drivers.
+        for (int i = 0; i < numOutputs; ++i)
+            juce::FloatVectorOperations::clear (outputs[i], numSamples);
+        return;
+    }
+
+    engine.process (inputs, channels.data(), numDeviceChannels, numSamples);
 }

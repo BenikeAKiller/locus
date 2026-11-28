@@ -181,6 +181,18 @@ public:
             const auto v = ui::LayoutChecker::check (parent);
             expect (v.size() >= 3, v.joinIntoString ("\n"));
         }
+
+       #if JUCE_WINDOWS
+        beginTest ("Windows: ASIO is offered as an audio device type");
+        {
+            juce::AudioDeviceManager manager;
+            juce::StringArray types;
+            for (auto* type : manager.getAvailableDeviceTypes())
+                types.add (type->getTypeName());
+            logMessage ("  device types: " + types.joinIntoString (", "));
+            expect (types.contains ("ASIO"), "ASIO missing: " + types.joinIntoString (", "));
+        }
+       #endif
     }
 };
 

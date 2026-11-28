@@ -1,5 +1,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
+#include <juce_audio_devices/juce_audio_devices.h>
 #include <cstdio>
+#include <iostream>
 
 namespace
 {
@@ -24,6 +26,41 @@ int main (int argc, char** argv)
     if (argc >= 3 && juce::String (argv[1]) == "--snapshots")
     {
         writeUiSnapshots (juce::File::getCurrentWorkingDirectory().getChildFile (juce::String (argv[2])));
+        return 0;
+    }
+
+    // "--devices [type]": lists every output device of each device type (or only of the given
+    // type, e.g. ASIO) with the outputs Locus would get, opening each one briefly. Diagnostic.
+    if (argc >= 2 && juce::String (argv[1]) == "--devices")
+    {
+        juce::AudioDeviceManager manager;
+        for (auto* type : manager.getAvailableDeviceTypes())
+        {
+            if (argc >= 3 && type->getTypeName() != juce::String (argv[2]))
+                continue;
+
+            type->scanForDevices();
+            for (const auto& name : type->getDeviceNames (false))
+            {
+                juce::String line = type->getTypeName() + " | " + name + " | ";
+                if (std::unique_ptr<juce::AudioIODevice> device { type->createDevice (name, {}) })
+                {
+                    juce::BigInteger all;
+                    all.setRange (0, 64, true);
+                    const auto error = device->open ({}, all, 0.0, 0);
+                    line += error.isNotEmpty() ? "cannot open: " + error
+                                               : juce::String (device->getActiveOutputChannels().countNumberOfSetBits()) + " outputs of "
+                                                   + juce::String (device->getOutputChannelNames().size()) + ", "
+                                                   + juce::String (device->getCurrentSampleRate() / 1000.0, 1) + " kHz";
+                    device->close();
+                }
+                else
+                {
+                    line += "cannot create";
+                }
+                std::cout << line << std::endl;
+            }
+        }
         return 0;
     }
 

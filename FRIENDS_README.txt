@@ -1,4 +1,4 @@
-﻿LOCUS 0.1.0 - multichannel spatializer
+﻿LOCUS 0.1.1 - multichannel spatializer
 =====================================
 
 Locus places up to 16 tracks from your DAW around a speaker setup (stereo to 32 speakers).
@@ -11,7 +11,7 @@ It has two parts:
 
 INSTALL (Windows 10 or 11, 64-bit)
 ----------------------------------
-1. Run Locus-0.1.0-Windows-Setup.exe.
+1. Run Locus-0.1.1-Windows-Setup.exe.
    Windows may say "Windows protected your PC", because the installer isn't signed with a
    paid certificate. Click "More info", then "Run anyway".
 2. The installer puts:
@@ -32,6 +32,9 @@ FIRST USE
 1. Start Locus (Start menu > Locus).
 2. Click Settings (top right) and pick your audio interface, sample rate and buffer size,
    and turn on the output channels you use.
+   Windows, with a pro interface (RME, MOTU, Focusrite, Antelope...): set "Audio device type"
+   to ASIO and pick the interface's ASIO driver (e.g. "ASIO Fireface USB"). Only ASIO gives
+   Locus all of the interface's outputs; "Windows Audio" usually offers just 2 to 8 channels.
 3. Pick your speaker layout in the Speakers tab (or build your own with "Edit custom...").
 4. In the DAW, put Locus Send on a track and press play. The plugin should say
    "Connected · Slot 1", and the track appears in Locus's source list.
@@ -56,6 +59,15 @@ No sound from Locus, or Locus can't open the audio interface
     ASIO, set the DAW to another device or driver (e.g. WASAPI / Windows Audio, or your
     computer's built-in output), so Locus can have the interface. Check Settings in Locus.
 
+Sound only moves between two speakers, or some speakers stay silent / the top bar says
+"Outputs ... not available on this device"
+    The speaker layout uses more outputs than the selected device gives Locus. In Settings,
+    choose the ASIO driver of your interface (see FIRST USE), and make sure the output channels
+    your speakers use are switched on. "Windows Audio" devices are often stereo only, and the
+    channel count of a "Windows Audio" device follows the Windows speaker setup (Control Panel
+    > Sound > Configure), e.g. 6 channels for 5.1. Also check the Speakers tab: each speaker's
+    Output number must be a channel your interface has.
+
 Sound is choppy or crackles
     In Locus, Settings > Link buffer: pick a bigger value (2048 frames). Also try a bigger
     buffer size for the audio interface in the same window.
@@ -79,7 +91,7 @@ Antivirus warns about Locus
 MAC (macOS 12 Monterey or newer, Apple Silicon or Intel)
 ---------------------------------------------------------
 INSTALL
-1. Double-click Locus-0.1.0-macOS.pkg.
+1. Double-click Locus-0.1.1-macOS.pkg.
    The package isn't signed with a paid Apple Developer ID, so macOS says it "cannot be
    opened" / "can't check it for malicious software". Instead: right-click (or Ctrl-click)
    the .pkg > Open > Open.

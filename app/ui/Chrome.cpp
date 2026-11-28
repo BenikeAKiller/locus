@@ -45,12 +45,37 @@ TopBar::TopBar (AppController& c) : controller (c)
 
 }
 
+/** "3", "3, 5" or "3–6": a sorted list of channel numbers with runs joined. */
+static juce::String formatChannelList (const juce::Array<int>& channels)
+{
+    juce::StringArray parts;
+    for (int i = 0; i < channels.size();)
+    {
+        int j = i;
+        while (j + 1 < channels.size() && channels[j + 1] == channels[j] + 1)
+            ++j;
+
+        parts.add (j == i ? juce::String (channels[i])
+                          : juce::String (channels[i]) + juce::String (juce::CharPointer_UTF8 ("\xe2\x80\x93")) + juce::String (channels[j]));
+        i = j + 1;
+    }
+    return parts.joinIntoString (", ");
+}
+
 void TopBar::refresh()
 {
-    const auto summary = controller.getDeviceSummary();
+    // Speakers routed to outputs the device can't play would be silent: say so first, in the
+    // warning colour, so it isn't elided.
+    const auto missing = controller.getMissingOutputs();
+    auto summary = controller.getDeviceSummary();
+    if (! missing.isEmpty())
+        summary = juce::String (missing.size() == 1 ? "Output " : "Outputs ") + formatChannelList (missing)
+                + " not available on this device (see Settings)" + juce::String (juce::CharPointer_UTF8 (" \xc2\xb7 ")) + summary;
+
     if (summary != deviceText)
     {
         deviceText = summary;
+        device.setColour (juce::Label::textColourId, missing.isEmpty() ? Colours::textDim : Colours::warn);
         resized();
     }
 

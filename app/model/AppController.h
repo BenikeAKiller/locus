@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Bindings.h"
 #include "../engine/AudioHost.h"
@@ -60,7 +60,7 @@ public:
     static const locus::ParamSpec& getSpeakerRadiusSpec();
     ParamAccess speakerRadiusParam();
 
-    /** Custom setup (spec §5.3). */
+    /** Custom setup (spec Â§5.3). */
     bool isCustomSetup() const { return setupName == locus::customSetupName; }
     const locus::SpeakerLayout& getCustomLayout() const noexcept { return customLayout; }
 
@@ -75,7 +75,7 @@ public:
     void endSpeakerEdit() noexcept { editingSpeakers = false; }
 
     //==============================================================================
-    /** Session (spec §10). */
+    /** Session (spec Â§10). */
     locus::SessionData captureSession() const;
     void applySession (const locus::SessionData&);
 
@@ -103,6 +103,10 @@ public:
     float getMeterHoldDb (int deviceChannel) const noexcept;
 
     juce::String getDeviceSummary() const;
+
+    /** 1-based outputs the speaker layout uses that the open device can't play (missing, or
+        switched off in Settings), ascending. Empty when everything is playable or no device is open. */
+    juce::Array<int> getMissingOutputs() const;
     double getCpuPercent() const;
 
     /** IPC target buffering per source in frames (Settings: 256, 512, 1024, 2048). */
